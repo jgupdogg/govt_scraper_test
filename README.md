@@ -1,97 +1,175 @@
 # Government Data Pipeline
 
-A comprehensive system for scraping, processing, summarizing, and storing government documents with knowledge graph integration.
+A comprehensive system for scraping, processing, summarizing, and analyzing government documents with advanced AI integration and knowledge graph capabilities.
 
-## Overview
-
-This pipeline automates the entire process of gathering content from government websites, generating structured summaries, creating vector embeddings for search, and building a knowledge graph of entities and relationships.
-
-The system is designed to be:
-- **Efficient**: Automatically skips previously processed content
-- **Intelligent**: Uses AI to generate summaries and extract entities
-- **Scalable**: Works with various government websites and document types
-- **Integrated**: Combines vector search and knowledge graph capabilities
-
-## Architecture
+## System Architecture
 
 ![Architecture Diagram](https://mermaid.ink/img/pako:eNp1kk9PwzAMxb9KlBNI7dRfadMd9sNhHJAQBw6-JF6JljYiyYTG-O7YabcJDXpJnPfs92zHB2GsRZGLFsseO8WbyjVgfvSQHlE36Db73GOFJnP8TK2paa4rPRfwUGuv29TAIwx2dI3Vrtd2_GvrGjDG2t4sZM72QHsM6Hw4z9v2YAfs-2hNlxJetkMfuUiIE0yElhXtMcLjhcVx4vqeomfQ89oO2YlHE8k-3gf6_cYGOX1P1OQ4n0eewvUYrgGGEqMiDd_pU47LVqOm4KlmxuPJkHjnZ6PY6Dv0nkydImeqoUDRswzXU-UbVGQdjsHBZzZdrUDkeGDrODFc6a3QHlsUXHMnzuFUjppA8W1G0zg0KT-xexQFO9QJLlluUBww8cYG0I-A6NXDnzhD3r7AoQq_MQvLSKI4GxrpF02q3jSmnLXGXRzpZ73TUDTQaOKTcazYsUXBN4_HXdDw-geVvsvB?type=png)
 
-## Components & Packages
+The system consists of three main processing stages:
 
-### 1. Web Scraping
-- **ScraperAdapter**: Custom adapter for browser automation
-- **Packages**:
-  - `selenium`: Browser automation
-  - `BeautifulSoup4`: HTML parsing
-  - `lxml`: XPath processing
-  - `requests`: HTTP requests for non-JS sites
+1. **Scraping Layer**: Extracts content from government websites
+2. **Processing Layer**: Analyzes and structures the data with AI
+3. **Storage Layer**: Stores content across specialized databases
+4. **Search Layer**: Provides intelligent retrieval capabilities
 
-### 2. Content Extraction
-- **ContentExtractor**: Base class with CSS and XPath implementations
-- **Packages**:
-  - `BeautifulSoup4`: Content extraction
-  - `lxml`: XPath extraction
+### Data Flow
 
-### 3. Document Processing
-- **EnhancedProcessor**: Unified processor for document processing
-- **Packages**:
-  - `langchain`: Framework for AI chains
-  - `langchain_anthropic`: Claude integration
-  - `langchain.text_splitter`: Document chunking
-  - `langchain.chains.summarize`: Map-reduce summarization
-
-### 4. AI Integration
-- **Model**: Claude 3 Haiku for summarization and entity extraction
-- **Packages**:
-  - `langchain_anthropic`: Claude model wrapper
-  - `anthropic`: API access to Claude
-
-### 5. Vector Embeddings & Search
-- **Models**: OpenAI text-embedding-3-small
-- **Packages**:
-  - `langchain_openai`: OpenAI embedding wrapper
-  - `openai`: API access
-  - `langchain_pinecone`: Vector database integration
-  - `pinecone`: Vector database API
-
-### 6. Knowledge Graph
-- **KnowledgeGraphManager**: Entity and relationship management
-- **Packages**:
-  - `neo4j`: Graph database driver
-  - `langchain.graphs`: Graph operations (optional)
-
-### 7. Database Storage
-- **SupabaseManager**: Document storage and retrieval
-- **Packages**:
-  - `supabase`: Supabase client
-  - `python-dotenv`: Environment variable management
-
-## Installation
-
-### Prerequisites
-- Python 3.8+
-- Supabase account
-- Pinecone account
-- Neo4j AuraDB account (for knowledge graph)
-- Anthropic API key (for Claude)
-- OpenAI API key (for embeddings)
-
-### Install Dependencies
-
-```bash
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install packages
-pip install python-dotenv supabase langchain langchain_anthropic langchain_openai 
-pip install langchain_pinecone neo4j beautifulsoup4 lxml selenium requests
+```
+Government Websites → Scraping → Document Extraction → AI Processing → 
+                                    ↓
+                      ┌─────────────┼─────────────────┐
+                      ↓             ↓                 ↓
+                   Supabase      Pinecone           Neo4j
+                 (Documents)     (Vectors)     (Knowledge Graph)
+                      ↑             ↑                 ↑
+                      └─────────────┼─────────────────┘
+                                    ↓
+                              Hybrid Search
 ```
 
-### Environment Setup
+## Core Components
 
-Create a `.env` file in the project root:
+The `core.py` module provides the foundation of the pipeline with these key classes:
 
+### 1. ScraperAdapter
+
+Handles browser automation for content extraction:
+- Uses `AirflowWebScraper` under the hood for JavaScript rendering
+- Provides methods for extracting document links and content
+- Manages browser lifecycle to prevent resource leaks
+
+### 2. Content Extraction
+
+Two specialized extractors:
+- `XPathExtractor`: Uses XPath expressions for precise HTML targeting
+- `CSSExtractor`: Uses CSS selectors for more flexible extraction
+
+### 3. Document Representation
+
+The `Document` class centrally manages:
+- Metadata (URL, title, source)
+- Content extraction and storage
+- Processing status tracking
+- Conversion between internal and database representations
+
+### 4. Supabase Integration
+
+`SupabaseManager` handles all database operations:
+- Document storage and retrieval
+- Source and subsource tracking
+- Document status updates
+- Full-text search capabilities
+- Batch operations for efficiency
+
+## Enhanced Processor
+
+The `enhanced_processor.py` module contains the `EnhancedProcessor` class, which handles AI-powered document processing:
+
+### AI Model Integration
+
+- **Text Generation**: Claude 3 Haiku (Anthropic)
+  - Used for: Intelligent document summarization and entity extraction
+  - Implementation: `langchain_anthropic.ChatAnthropic`
+  - Key feature: Map-reduce processing for long documents
+
+- **Vector Embeddings**: text-embedding-3-small (OpenAI)
+  - Used for: Semantic search capabilities
+  - Implementation: `langchain_openai.OpenAIEmbeddings`
+  - Dimension: 1536
+
+### Processing Capabilities
+
+1. **Smart Summarization**:
+   - Automatically adjusts approach based on document length
+   - Short documents: Direct single-prompt summarization
+   - Long documents: Map-reduce chunking for better handling
+   - Output format: Structured with TITLE, FACTS, SENTIMENT, and TAGS
+
+2. **Entity Extraction**:
+   - Identifies organizations, people, programs, policies from text
+   - Creates standardized canonical names for entity resolution
+   - Extracts relationships between entities
+   - Filters out generic concepts, dates, and numerical values
+
+3. **Vector Embeddings**:
+   - Creates embeddings of document summaries
+   - Stores vectors in Pinecone with document metadata
+   - Enables semantic similarity search
+
+4. **Knowledge Graph Integration**:
+   - Creates entity nodes from extracted entities
+   - Establishes relationships between entities
+   - Links documents to entities through mentions
+   - Enables graph-based document discovery
+
+## Knowledge Graph Manager
+
+The `knowledge_graph_manager.py` module handles Neo4j graph database operations:
+
+- Entity storage and resolution
+- Relationship mapping between entities
+- Document-entity connections
+- Graph traversal for related document discovery
+
+## Optimized Hybrid Search
+
+The `hybrid-search-optimized.py` script implements the hybrid search approach:
+
+### Search Components
+
+1. **Vector Search** (Pinecone):
+   - Performs semantic similarity matching
+   - Finds documents with similar meaning regardless of wording
+   - Uses OpenAI embeddings for high-quality semantic representation
+
+2. **Knowledge Graph Search** (Neo4j):
+   - Entity-based document discovery
+   - Follows relationships between entities
+   - Can discover documents through indirect connections
+   - Provides explanatory context for search results
+
+3. **Metadata Retrieval** (Supabase):
+   - Single source of truth for document content
+   - Provides full summaries for search results
+   - Ensures consistent document representation
+
+### Search Process
+
+1. Extract entities from the search query using Claude
+2. Perform vector search in Pinecone
+3. Perform knowledge graph search in Neo4j
+4. Merge results with configurable weighting
+5. Fetch full document details from Supabase
+6. Return combined results with context explanation
+
+### Result Merging Strategies
+
+- **Weighted**: Combines vector and graph scores with configurable weights
+- **Interleaved**: Alternates between vector and graph results
+- **Separate**: Keeps results from different sources distinct
+
+## Tech Stack Summary
+
+### AI Models
+- **Claude 3 Haiku** (Anthropic): Summarization, entity extraction
+- **text-embedding-3-small** (OpenAI): Vector embeddings for semantic search
+
+### Databases
+- **Supabase**: Document storage, metadata, full-text search
+- **Pinecone**: Vector database for semantic search
+- **Neo4j**: Graph database for entity relationships
+
+### Key Libraries
+- **LangChain**: AI orchestration for document processing
+- **Selenium**: Browser automation for scraping
+- **BeautifulSoup4/lxml**: HTML parsing and extraction
+
+## Setup and Maintenance
+
+### Environment Variables
+
+Required API keys and connection details:
 ```
 # Supabase credentials
 SUPABASE_URL=https://your-project-id.supabase.co
@@ -112,110 +190,45 @@ NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=your-password
 ```
 
-## Configuration
+### Database Integrity
 
-Create a `config.json` file to specify which government websites to scrape:
+Key validation scripts:
+- `neo4j-graph-test.py`: Tests knowledge graph structure and contents
+- `pinecone-document-gap-analyzer.py`: Validates vector-document alignment
+- `hybrid-search-optimized.py`: Tests complete search functionality
 
-```json
-{
-  "sources": [
-    {
-      "name": "Federal Reserve",
-      "url": "https://www.federalreserve.gov",
-      "pages": [
-        {
-          "name": "Press Releases",
-          "url_pattern": "/newsevents/pressreleases.htm",
-          "extraction": {
-            "type": "css",
-            "document_links": "ul.list-unstyled li a",
-            "content": "main"
-          },
-          "use_javascript": true
-        }
-      ]
-    }
-  ]
-}
-```
+### Common Maintenance Tasks
 
-## Usage
+1. **Reprocessing documents**:
+   ```bash
+   python runner.py --process-only
+   ```
 
-### Database Setup
+2. **Creating missing vectors**:
+   ```bash
+   python pinecone-document-gap-analyzer.py --create
+   ```
 
-Run the SQL setup script in Supabase:
+3. **Exploring the knowledge graph**:
+   ```bash
+   python neo4j-graph-viz.py --summary
+   ```
 
-```bash
-python setup_supabase.py --print-sql-only
-```
+4. **Testing search functionality**:
+   ```bash
+   python hybrid-search-optimized.py "your search query"
+   ```
 
-Copy the output SQL and run it in the Supabase SQL Editor.
+## Performance Considerations
 
-### Full Pipeline
+- **Vector Search**: Most efficient for similarity matching but lacks context
+- **Graph Search**: Provides contextual connections but slower for large-scale retrieval
+- **Hybrid Approach**: Best of both worlds with balanced trade-offs
 
-```bash
-python runner.py --config config.json
-```
+## Potential Enhancements
 
-### Scrape Only
-
-```bash
-python runner.py --config config.json --scrape-only
-```
-
-### Process Only
-
-```bash
-python runner.py --config config.json --process-only --limit 20
-```
-
-### Reset Knowledge Graph
-
-```bash
-python runner.py --reset-kg
-```
-
-### Search Documents
-
-```bash
-python hybrid_search.py "your search query"
-```
-
-## Features
-
-### 1. Intelligent Document Processing
-- **Smart Summarization**: Automatically adapts to document length
-- **Structured Output**: Consistent summaries with TITLE, FACTS, SENTIMENT, and TAGS
-- **Entity Extraction**: Identifies organizations, people, programs, policies, and their relationships
-
-### 2. Chronological Optimization
-- Automatically skips older documents when newer ones are already processed
-- Dramatically reduces processing time for frequently checked sources
-- Smart re-processing of previously failed documents
-
-### 3. Hybrid Search
-- Combines vector similarity with knowledge graph relationships
-- More comprehensive results than either approach alone
-- Provides context on how entities are related
-
-### 4. Entity Resolution
-- Handles different mentions of the same entity (e.g., "EPA", "Environmental Protection Agency")
-- Builds a coherent knowledge graph with standardized entity names
-- Filters out numerical values, dates, and generic concepts that aren't true entities
-
-## Troubleshooting
-
-### Connection Issues
-- Verify your environment variables are correct
-- Ensure your API keys have sufficient permissions and credits
-- Check that your Neo4j instance is running and accessible
-
-### Processing Errors
-- Examine logs for specific error messages
-- Try running with `--debug` flag for more detailed information
-- For Neo4j connection issues, use `neo4j-test.py` to verify connectivity
-
-### Knowledge Graph Issues
-- Run `neo4j-doc-test.py` to test document integration
-- Use `runner.py --kg-stats` to view entity and relationship counts
-- Consider `--reset-kg` to start fresh if the graph becomes corrupted
+1. **Temporal Modeling**: Add time-based relationships to track changing policies
+2. **Multi-Document Summaries**: Create aggregated views across multiple sources
+3. **User Feedback Loop**: Capture search relevance feedback to improve results
+4. **Real-time Alerts**: Monitor for new content matching specific criteria
+5. **API Layer**: Provide programmatic access to the pipeline's capabilities
