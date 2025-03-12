@@ -1228,6 +1228,40 @@ class SupabaseManager:
             logger.error(f"Error getting document by URL {url}: {e}")
             return None
     
+    
+    def get_documents_by_ids(self, doc_ids):
+        """
+        Get multiple documents by their IDs.
+        
+        Args:
+            doc_ids: List of document IDs to retrieve
+            
+        Returns:
+            List of document dictionaries
+        """
+        try:
+            if not doc_ids:
+                return []
+            
+            # Convert any non-string IDs to strings
+            str_ids = [str(doc_id) for doc_id in doc_ids]
+            
+            # Query Supabase for documents with these IDs
+            result = self.supabase.table("govt_documents").select(
+                "id", "title", "url", "summary", "source_name", "subsource_name", "content_hash"
+            ).in_("id", str_ids).execute()
+            
+            if result.data:
+                logger.info(f"Retrieved {len(result.data)} documents from Supabase by IDs")
+                return result.data
+            else:
+                logger.warning(f"No documents found in Supabase for the provided IDs")
+                return []
+                
+        except Exception as e:
+            logger.error(f"Error getting documents by IDs: {e}")
+            return []
+    
     def store_document(self, document: Document) -> int:
         """
         Store a document in Supabase.
