@@ -28,3 +28,5 @@ logs/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+/downloaded_files
