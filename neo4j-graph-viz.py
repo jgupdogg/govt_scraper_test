@@ -192,8 +192,8 @@ class Neo4jGraphVisualizer:
                 
                 # Add the relationship
                 G.add_edge(
-                    rel.start_node.id,
-                    rel.end_node.id,
+                    rel.start_node.element_id,
+                    rel.end_node.element_id,
                     type=rel_type,
                     properties=props
                 )

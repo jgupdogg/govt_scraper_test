@@ -491,7 +491,7 @@ TAGS: rural infrastructure, federal grants, funding opportunity, application dea
                     "title": document.title,
                     "source": document.source_name, 
                     "subsource": document.subsource_name,
-                    "content": document.summary,  # This is used as text_key for embedding
+                    "doc_id": document.doc_id,  # Add this line
                     "processed_at": datetime.now().isoformat()
                 }
             )
